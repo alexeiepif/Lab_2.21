@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
+
 import argparse
 import sqlite3
 import typing as t
@@ -13,7 +15,9 @@ def display_workers(staff: t.List[t.Dict[str, t.Any]]) -> None:
     # Проверить, что список работников не пуст.
     if staff:
         # Заголовок таблицы.
-        line = "+-{}-+-{}-+-{}-+-{}-+".format("-" * 4, "-" * 30, "-" * 20, "-" * 8)
+        line = "+-{}-+-{}-+-{}-+-{}-+".format(
+            "-" * 4, "-" * 30, "-" * 20, "-" * 8
+        )
         print(line)
         print(
             "| {:^4} | {:^30} | {:^20} | {:^8} |".format(
@@ -137,7 +141,9 @@ def select_all(database_path: Path) -> t.List[t.Dict[str, t.Any]]:
     ]
 
 
-def select_by_period(database_path: Path, period: int) -> t.List[t.Dict[str, t.Any]]:
+def select_by_period(
+    database_path: Path, period: int
+) -> t.List[t.Dict[str, t.Any]]:
     """
     Выбрать всех работников с периодом работы больше заданного.
     """
@@ -179,12 +185,16 @@ def main(command_line=None):
 
     # Создать основной парсер командной строки.
     parser = argparse.ArgumentParser("workers")
-    parser.add_argument("--version", action="version", version="%(prog)s 0.1.0")
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s 0.1.0"
+    )
 
     subparsers = parser.add_subparsers(dest="command")
 
     # Создать субпарсер для добавления работника.
-    add = subparsers.add_parser("add", parents=[file_parser], help="Add a new worker")
+    add = subparsers.add_parser(
+        "add", parents=[file_parser], help="Add a new worker"
+    )
     add.add_argument(
         "-n", "--name", action="store", required=True, help="The worker's name"
     )

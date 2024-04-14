@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Для своего варианта лабораторной работы 2.16
-# необходимо дополнительно реализовать интерфейс командной строки (CLI).
+# Для своего варианта лабораторной работы 2.17 
+# необходимо реализовать хранение данных в базе 
+# данных SQLite3. Информация в базе данных 
+# должна храниться не менее чем в двух таблицах.
 
 import argparse
-import bisect
-import json
-import os
 import sqlite3
 import typing as t
 from pathlib import Path
-
-from jsonschema import ValidationError, validate
 
 
 def create_db(database_path: Path) -> None:
@@ -137,7 +134,9 @@ def display_routes(routes: t.List[t.Dict[str, t.Any]]) -> None:
         print("Список маршрутов пуст.")
 
 
-def select_routes(database_path: Path, name_point: str) -> t.List[t.Dict[str, t.Any]]:
+def select_routes(
+    database_path: Path, name_point: str
+) -> t.List[t.Dict[str, t.Any]]:
     """
     Выбрать маршруты с заданным пунктом отправления или прибытия.
     """
@@ -172,16 +171,19 @@ def main(command_line=None):
     """
     file_parser = argparse.ArgumentParser(add_help=False)
     file_parser.add_argument(
-        "--db", action="store",
+        "--db",
+        action="store",
         default=str(Path.home() / "routes.db"),
-        help="The database file name"
+        help="The database file name",
     )
     parser = argparse.ArgumentParser("routes")
-    parser.add_argument("--version", action="version",
-                        version="%(prog)s 0.1.0")
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s 0.1.0"
+    )
     subparsers = parser.add_subparsers(dest="command")
     add = subparsers.add_parser(
-        "add", parents=[file_parser], help="Add a new route")
+        "add", parents=[file_parser], help="Add a new route"
+    )
     add.add_argument(
         "-s", "--start", action="store", required=True, help="The route start"
     )
@@ -198,7 +200,8 @@ def main(command_line=None):
     )
 
     _ = subparsers.add_parser(
-        "list", parents=[file_parser], help="Display all routes")
+        "list", parents=[file_parser], help="Display all routes"
+    )
 
     select = subparsers.add_parser(
         "select", parents=[file_parser], help="Select the routes"
@@ -217,10 +220,9 @@ def main(command_line=None):
     db_path = Path(args.db)
     create_db(db_path)
 
-
     match args.command:
         case "add":
-            routes = add_route(db_path, args.start, args.end, args.number)
+            add_route(db_path, args.start, args.end, args.number)
 
         case "list":
             display_routes(select_all(db_path))
@@ -228,6 +230,7 @@ def main(command_line=None):
         case "select":
             selected = select_routes(db_path, args.point)
             display_routes(selected)
+
 
 if __name__ == "__main__":
     main()
