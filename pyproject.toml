@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "lab-2-21"
+version = "0.1.0"
+description = ""
+authors = ["alexeiepif <aled2093746@gmail.com>"]
+readme = "README.md"
+packages = [{include = "lab_2"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+jsonschema = "^4.21.1"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.0"
+flake8 = "^7.0.0"
+isort = "^5.13.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
