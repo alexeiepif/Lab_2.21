@@ -3,26 +3,45 @@
 
 # Для своего варианта лабораторной работы 2.17
 # необходимо реализовать хранение данных в базе
-# данных SQLite3. Информация в базе данных
+# данных pgsql. Информация в базе данных
 # должна храниться не менее чем в двух таблицах.
 
 import argparse
-import sqlite3
 import typing as t
-from pathlib import Path
+
+import psycopg2 as pgsql
 
 
-def create_db(database_path: Path) -> None:
+def create_db(database_path: str) -> None:
     """
     Создать базу данных.
     """
-    conn = sqlite3.connect(database_path)
+    try:
+        conn = pgsql.connect(
+            dbname=database_path, user="aleksejepifanov", host="localhost"
+        )
+    except  pgsql.OperationalError:
+        conn = pgsql.connect(
+            dbname="postgres", user="aleksejepifanov", host="localhost"
+        )
+        cur = conn.cursor()
+        conn.autocommit = True
+        cur.execute(
+            f"CREATE DATABASE {database_path}",
+        )
+        conn.autocommit = False
+
+        conn.close()
+        conn = pgsql.connect(
+            dbname=database_path, user="aleksejepifanov", host="localhost"
+        )
+
     cursor = conn.cursor()
     # Создать таблицу с информацией о путях.
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS start (
-            start_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            start_id SERIAL PRIMARY KEY,
             start_point TEXT UNIQUE NOT NULL
         );
         """
@@ -38,15 +57,17 @@ def create_db(database_path: Path) -> None:
         )
         """
     )
-
+    conn.commit()
     conn.close()
 
 
-def select_all(database_path: Path) -> t.List[t.Dict[str, t.Any]]:
+def select_all(database_path: str) -> t.List[t.Dict[str, t.Any]]:
     """
     Выбрать все маршруты.
     """
-    conn = sqlite3.connect(database_path)
+    conn = conn = pgsql.connect(
+        dbname=database_path, user="aleksejepifanov", host="localhost"
+    )
     cursor = conn.cursor()
 
     cursor.execute(
@@ -69,21 +90,23 @@ def select_all(database_path: Path) -> t.List[t.Dict[str, t.Any]]:
     ]
 
 
-def add_route(database_path: Path, start: str, end: str, count: int) -> None:
+def add_route(database_path: str, start: str, end: str, count: int) -> None:
     """
     Добавить данные о маршруте.
     """
     start = start.lower()
     end = end.lower()
 
-    conn = sqlite3.connect(database_path)
+    conn = pgsql.connect(
+        dbname=database_path, user="aleksejepifanov", host="localhost"
+    )
     cursor = conn.cursor()
 
     # Получить идентификатор должности в базе данных.
     # Если такой записи нет, то добавить информацию о новой должности.
     cursor.execute(
         """
-        SELECT start_id FROM start WHERE start_point = ?
+        SELECT start_id FROM start WHERE start_point = %s
         """,
         (start,),
     )
@@ -91,11 +114,11 @@ def add_route(database_path: Path, start: str, end: str, count: int) -> None:
     if not row:
         cursor.execute(
             """
-            INSERT INTO start (start_point) VALUES (?)
+            INSERT INTO start (start_point) VALUES (%s) RETURNING start_id
             """,
             (start,),
         )
-        start_id = cursor.lastrowid
+        start_id = cursor.fetchone()[0]
     else:
         start_id = row[0]
 
@@ -103,7 +126,7 @@ def add_route(database_path: Path, start: str, end: str, count: int) -> None:
     cursor.execute(
         """
         INSERT INTO routes (start_id, route_number, end_point)
-        VALUES (?, ?, ?)
+        VALUES (%s, %s, %s)
         """,
         (start_id, count, end),
     )
@@ -135,12 +158,14 @@ def display_routes(routes: t.List[t.Dict[str, t.Any]]) -> None:
 
 
 def select_routes(
-    database_path: Path, name_point: str
+    database_path: str, name_point: str
 ) -> t.List[t.Dict[str, t.Any]]:
     """
     Выбрать маршруты с заданным пунктом отправления или прибытия.
     """
-    conn = sqlite3.connect(database_path)
+    conn = pgsql.connect(
+        dbname=database_path, user="aleksejepifanov", host="localhost"
+    )
     cursor = conn.cursor()
 
     cursor.execute(
@@ -148,7 +173,7 @@ def select_routes(
         SELECT s.start_point, r.end_point, r.route_number
         FROM start s
         JOIN routes r ON s.start_id = r.start_id
-        WHERE s.start_point = ? OR r.end_point = ?
+        WHERE s.start_point = %s OR r.end_point = %s
         """,
         (name_point, name_point),
     )
@@ -173,7 +198,7 @@ def main(command_line=None):
     file_parser.add_argument(
         "--db",
         action="store",
-        default=str(Path.home() / "routes.db"),
+        default="routes",
         help="The database file name",
     )
     parser = argparse.ArgumentParser("routes")
@@ -217,7 +242,7 @@ def main(command_line=None):
     args = parser.parse_args(command_line)
 
     # Получить путь к файлу базы данных.
-    db_path = Path(args.db)
+    db_path = args.db
     create_db(db_path)
 
     match args.command:
@@ -233,4 +258,5 @@ def main(command_line=None):
 
 
 if __name__ == "__main__":
-    main("add --db test -s st -e kt -n 1".split())
+    # main('add -s st -e kt -n 1'.split())
+    main()
