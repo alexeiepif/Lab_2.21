@@ -258,5 +258,4 @@ def main(command_line=None):
 
 
 if __name__ == "__main__":
-    # main('add -s st -e kt -n 1'.split())
     main()

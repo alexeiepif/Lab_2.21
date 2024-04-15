@@ -233,4 +233,4 @@ def main(command_line=None):
 
 
 if __name__ == "__main__":
-    main("add --db test -s st -e kt -n 1".split())
+    main()
